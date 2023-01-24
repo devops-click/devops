@@ -1,0 +1,3 @@
+[default]
+region = {{config.region}}
+output = {{config.output}}
