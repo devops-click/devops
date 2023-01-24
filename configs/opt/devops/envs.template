@@ -1,0 +1,17 @@
+# Rename this file to envs after setting the required parameters
+
+# MySQL DB
+db_master_host="{{envs.db_master_host}}"
+db_master_user="{{envs.db_master_user}}"
+db_master_pass="{{envs.db_master_pass}}"
+
+# Environment
+environment="{{envs.environment}}"
+app="{{envs.app}}"
+
+# Folders
+backup_bucket="{{envs.backup_bucket}}" # ex: company-backup-bucket
+config_bucket="{{envs.config_bucket}}" # ex: company-config-bucket
+app_bucket="{{envs.app_bucket}}" # ex: company-app-bucket
+source_sites="{{envs.source_sites}}" # ex: /var/www/html (Important: Do not put "/" in the end!!)
+backup_folder="{{envs.backup_folder}}" # ex: /devops-bkp (Important: Do not put "/" in the end!!)

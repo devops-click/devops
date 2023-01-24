@@ -1,9 +1,40 @@
+*.iml
+*.ipr
+*.iws
+*.pem
+*.war
+*.~vsdx
+.vscode/settings.json
+
+.DS_Store
+**/.DS_Store
+
+## Python projects
+__pycache__
+*.py[cod]
+.project
+.pydevproject
+
+# unignore
+!/kubernets/build
+
+# Terraform
+.terraform
+.terraform.lock.hcl
+remote-state.tf
+
 # Local .terraform directories
 **/.terraform/*
 
 # .tfstate files
 *.tfstate
 *.tfstate.*
+
+# Terraform Overriding files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
 
 # Crash log files
 crash.log

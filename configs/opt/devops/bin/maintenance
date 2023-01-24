@@ -1,0 +1,481 @@
+#!/bin/bash
+set -e # exit on error
+# set -eu # don't set -u since we want to have unbounded variables...
+
+echo -e " ____              ___                  _ _      _     "
+echo -e "|  _ \  _____   __/ _ \ _ __  ___   ___| (_) ___| | __ "
+echo -e "| | | |/ _ \ \ / / | | | '_ \/ __| / __| | |/ __| |/ / "
+echo -e "| |_| |  __/\ V /| |_| | |_) \__ \| (__| | | (__|   <  "
+echo -e "|____/ \___| \_/  \___/| .__/|___(_)___|_|_|\___|_|\_\ "
+echo -e "                       |_|                             "
+echo -e "         ____________________________________          "
+echo -e "        | Maintenance Script for your Cloud! |         "
+echo -e "        |              Moooooh!              |         "
+echo -e "         ------------------------------------          "
+echo -e "                \  ^__^                                "
+echo -e "                   (oo)_______    .                    "
+echo -e "                   (__)       )/\/                     "
+echo -e "                      ||----w||                        "
+echo -e "                      ||     ||                        "
+echo -e "                                               v1.00   "
+echo -e "                 https://devops.click                  \n"
+echo "Attention: To use this script you must have envs file configured!"
+echo -e "Template: https://github.com/devops-click/devops/blob/main/configs/opt/devops/envs.template \n"
+
+option=$1
+datevar="$(date +%Y-%m-%d)"
+hourvar="$(date +%H-%M)"
+list_freq=('daily' 'weekly' 'monthly' 'annual' 'custom' 'latest' 'decomission')
+list_s3types=('STANDARD' 'STANDARD_IA' 'ONEZONE_IA' 'INTELLIGENT_TIERING' 'GLACIER' 'DEEP_ARCHIVE' 'OUTPOSTS')
+
+# Set OS Type
+if [[ $OSTYPE == 'darwin'* ]]; then
+  os_type="macos"
+fi
+
+# Exit if system is MacOS
+function mac_exit() {
+  if [[ "$os_type" == "macos" ]]; then
+    error_banner
+    echo -e "!! You can't use this option in a MacOS!\n"
+    echo -e "!! exiting...\n"
+    exit 1
+  fi
+}
+
+# Function to filter, check and set all required variables.
+function set_variables() {
+    # Environment
+    list_app=('backup_mysql_db')
+    list_backup_bucket=('backup_mysql_db' 'restore_mysql_db' 'backup_sites')
+    list_backup_folder=('backup_mysql_db' 'restore_mysql_db' 'backup_sites')
+    list_config_bucket=('backup_mysql_db' 'restore_mysql_db' 'backup_sites')
+    list_environment=('backup_mysql_db')
+    list_source_sites=('backup_sites')
+    # DB Parameters
+    list_db_master_host=('backup_mysql_db')
+    list_db_master_user=('backup_mysql_db')
+    list_db_master_pass=('backup_mysql_db')
+
+  # check if system is macos...
+  if [[ $OSTYPE == 'darwin'* ]]; then
+    echo -e "** using MacOS **"
+    echo -e "** WARN: Most features disabled ** **\n"
+
+    # Load system envs file in MacOS
+    source ~/devops/envs
+
+    # Variable Checks
+    if [[ " ${list_app[@]} " =~ " $1 " ]]; then
+      [[ $app == "" ]] && echo "** app variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_backup_bucket[@]} " =~ " $1 " ]]; then
+      [[ $backup_bucket == "" ]] && echo "** backup_bucket variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_backup_folder[@]} " =~ " $1 " ]]; then
+      [[ $backup_folder == "" ]] && echo "** backup_folder variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_config_bucket[@]} " =~ " $1 " ]]; then
+      [[ $config_bucket == "" ]] && echo "** config_bucket variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_environment[@]} " =~ " $1 " ]]; then
+      [[ $environment == "" ]] && echo "** environment variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_source_sites[@]} " =~ " $1 " ]]; then
+      [[ $source_sites == "" ]] && echo "** source_sites variable notfound **" && proceed=false
+    fi
+
+    # DB Parameters
+    if [[ " ${list_db_master_host[@]} " =~ " $1 " ]]; then
+      [[ $db_master_host == "" ]] && echo "** db_master_host variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_db_master_user[@]} " =~ " $1 " ]]; then
+      [[ $db_master_user == "" ]] && echo "** db_master_user variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_db_master_pass[@]} " =~ " $1 " ]]; then
+      [[ $db_master_pass == "" ]] && echo "** db_master_pass variable notfound **" && proceed=false
+    fi
+
+    # Create the backup folder
+    if [[ ! $proceed == false ]]; then
+      [ ! -d $backup_folder ] && echo "** creating folder $backup_folder **" && mkdir -p $backup_folder || echo -e "** $backup_folder already exist **"
+      echo "** Setting up backup folder to: $backup_folder **"
+    fi
+
+    # Cancel script if some parameter is missing
+    [[ $proceed == false ]] && error_banner && echo -e "!*****! cannot proceed!! missing variables :( !*****!\n" && exit 1
+
+  else
+    echo "** using Linux **"
+
+    # Load source environment variables for Linux Systems
+    source /opt/devops/envs
+
+    if [[ " ${list_app[@]} " =~ " $1 " ]]; then
+      [[ $app == "" ]] && echo "** app variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_backup_bucket[@]} " =~ " $1 " ]]; then
+      [[ $backup_bucket == "" ]] && echo "** backup_bucket variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_backup_folder[@]} " =~ " $1 " ]]; then
+      [[ $backup_folder == "" ]] && echo "** backup_folder variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_config_bucket[@]} " =~ " $1 " ]]; then
+      [[ $config_bucket == "" ]] && echo "** config_bucket variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_environment[@]} " =~ " $1 " ]]; then
+      [[ $environment == "" ]] && echo "** environment variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_source_sites[@]} " =~ " $1 " ]]; then
+      [[ $source_sites == "" ]] && echo "** source_sites variable notfound **" && proceed=false
+    fi
+
+    # DB Parameters
+    if [[ " ${list_db_master_host[@]} " =~ " $1 " ]]; then
+      [[ $db_master_host == "" ]] && echo "** db_master_host variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_db_master_user[@]} " =~ " $1 " ]]; then
+      [[ $db_master_user == "" ]] && echo "** db_master_user variable notfound **" && proceed=false
+    fi
+
+    if [[ " ${list_db_master_pass[@]} " =~ " $1 " ]]; then
+      [[ $db_master_pass == "" ]] && echo "** db_master_pass variable notfound **" && proceed=false
+    fi
+
+    # Create the backup folder
+    if [[ ! $proceed == false ]]; then
+      [ ! -d $backup_folder ] && echo "** creating folder $backup_folder **" && mkdir -p $backup_folder || echo -e "** $backup_folder already exist **"
+      echo "** Setting up backup folder to: $backup_folder **"
+    fi
+
+    # Cancel script due to missing parameters
+    [[ $proceed == false ]] && error_banner && echo -e "!*****! cannot proceed!! missing variables :( !*****!\n" && exit 1
+  fi
+  echo -e "** finish setting and checking variables **"
+}
+
+function error_banner() {
+  echo -e "\n*********************** ERROR ***********************\n"
+}
+
+function backup_sites_latest() {
+    echo -e "** running backup_latest...\n"
+    if [[ "$environment" == "" ]]; then
+        echo -e "!! there is a problem with your Deployment! It's lacking the /tmp/env creation!\n"
+        exit 1
+    fi
+    echo "** executing backup into $s3backupdir"
+    cd $source_sites
+    rm -rf $backup_folder/${app}_${environment}_html_latest.tar.gz
+    tar -czvf $backup_folder/${app}_${environment}_html_latest.tar.gz .
+    aws s3 cp $backup_folder/${app}_${environment}_html_latest.tar.gz s3://$backup_bucket/daily/ --storage-class STANDARD
+}
+
+# Usage: list_include_item "list" "string_to_compare"
+# SOME PROBLEM WHEN RECEIVING THE ARRAY... ToDo: fix function, instead of writing it everytime.
+function list_include_item {
+  local list="$1"
+  local item="$2"
+
+  ## method 1
+  [[ " ${list[@]} " =~ " ${item} " ]] && return 0 || return 1;
+
+  ## not validated...
+  # [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && exit(0) || exit(1)
+
+  # method 2
+  # for i in "${list[@]}"
+  # do
+  #     if [ "$i" == "$item" ] ; then
+  #         return 0
+  #     else
+  #         return 1
+  #     fi
+  # done
+
+  ## method 3
+  # if [[ " ${list[@]} " =~ " ${item} " ]]; then
+  #   result 0
+  # else
+  #   result 1
+  # fi
+
+  ## method 4
+  # if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]] ; then
+  #   # yes, list include item
+  #   return 0
+  # else
+  #   echo "${list[*]}"
+  #   return 1
+  # fi
+}
+
+function backup_mysql_db() {
+  set_variables $option
+
+  help() {
+    echo -e "\n** Backup MySQL Database **\n"
+    echo -e "Options:"
+    echo -e "<frequency>   -> latest|daily|weekly|monthly|annual|custom (lowercase)"
+    echo -e "<type>        -> STANDARD|STANDARD_IA|ONEZONE_IA|INTELLIGENT_TIERING|GLACIER|DEEP_ARCHIVE|OUTPOSTS (UPPERCASE)"
+    echo -e "<database>    -> client database to backup (lowercase). ex: wordpress_des"
+    echo -e "Backup target -> s3://$backup_bucket/<frequency>\n"
+    echo -e "Usage:"
+    echo -e "./maintenance.sh backup_mysql_db <frequency> <type> <database>\n"
+    exit 1
+  }
+
+  if [[ "$1" == "" ]]; then
+    echo -e "  *error*: no option provided  \n"
+      help
+    exit 1
+  fi
+  if [[ "$1" == "help" ]]; then
+      help
+    exit 1
+  fi
+
+  if [[ " ${list_freq[@]} " =~ " $1 " ]]; then
+    if [[ " ${list_s3types[@]} " =~ " $2 " ]]; then
+      if [[ ! $3 == "" ]] ; then
+        if [[ "$os_type" == "macos" ]]; then
+          # mac_exit
+          [[ -f ~/devops/envs ]] && db_master_host="$(cat ~/devops/envs | grep db_master_host | sed 's/.*=//g' )" || db_master_host="$(echo '** notfound **')" && proceed=false
+          [[ -f ~/devops/envs ]] && db_master_user="$(cat ~/devops/envs | grep db_master_user | sed 's/.*=//g' )" || db_master_user="$(echo '** notfound **')" && proceed=false
+          [[ -f ~/devops/envs ]] && db_master_pass="$(cat ~/devops/envs | grep db_master_pass | sed 's/.*=//g' )" || db_master_pass="$(echo '** notfound **')" && proceed=false
+        else
+          [[ -f /opt/devops/envs ]] && db_master_host="$(cat /opt/devops/envs | grep db_master_host | sed 's/.*=//g' )" || db_master_host="$(echo '** notfound **')" && proceed=false
+          [[ -f /opt/devops/envs ]] && db_master_user="$(cat /opt/devops/envs | grep db_master_user | sed 's/.*=//g' )" || db_master_user="$(echo '** notfound **')" && proceed=false
+          [[ -f /opt/devops/envs ]] && db_master_pass="$(cat /opt/devops/envs | grep db_master_pass | sed 's/.*=//g' )" || db_master_pass="$(echo '** notfound **')" && proceed=false
+        fi
+        S3FOLDER=$1
+        S3TYPE=$2
+        DATABASE=$3
+
+        echo "** Executing $1 S3 $2 backup with the following parameters:"
+        echo -e "\n***************** $1 BACKUP ***********************\n"
+        echo "Date: $datevar $hourvar"
+        echo "Option: $option"
+        echo "Frequency: $1"
+        echo "Database: $DATABASE"
+        echo "Enironment: $environment"
+        echo "DB host: $db_master_host"
+        echo "DB user: $db_master_user"
+        echo "S3 destination: s3://$backup_bucket/$S3FOLDER"
+        echo -e "S3 type used: $S3TYPE\n"
+
+        if [[ $1 == "latest" ]] ; then
+          if [[ $DATABASE == "all" ]] ; then
+            mysqldump -u $db_master_user -p$db_master_pass --all-databases -h $db_master_host --single-transaction > $backup_folder/mysql_db_${DATABASE}_latest.dmp
+            # cd $backup_folder
+            # tar -czvf $backup_folder/mysql_db_${DATABASE}_latest.dmp .
+            aws s3 cp $backup_folder/mysql_db_${DATABASE}_latest.dmp s3://$backup_bucket/daily/ --storage-class $S3TYPE
+            rm -rf $backup_folder/mysql_db_${DATABASE}_latest.dmp
+          fi
+          if [[ ! $DATABASE == "all" ]] ; then
+            mysqldump -u $db_master_user -p$db_master_pass $DATABASE -h $db_master_host --single-transaction > $backup_folder/mysql_db_${DATABASE}_latest.dmp
+            # cd $backup_folder
+            # tar -czvf $backup_folder/mysql_db_${DATABASE}_latest.dmp .
+            aws s3 cp $backup_folder/mysql_db_${DATABASE}_latest.dmp s3://$backup_bucket/daily/ --storage-class $S3TYPE
+            rm -rf $backup_folder/mysql_db_${DATABASE}_latest.dmp
+          fi
+        else
+          if [[ $DATABASE == "all" ]] ; then
+            mysqldump -u $db_master_user -p$db_master_pass --all-databases -h $db_master_host --single-transaction > $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp
+            # cd $backup_folder
+            # tar -czvf $backup_folder/mysql_db_${DATABASE}_latest.dmp .
+            aws s3 cp $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp s3://$backup_bucket/$S3FOLDER/ --storage-class $S3TYPE
+            rm -rf $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp
+          fi
+          if [[ ! $DATABASE == "all" ]] ; then
+            mysqldump -u $db_master_user -p$db_master_pass $DATABASE -h $db_master_host --single-transaction > $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp
+            # cd $backup_folder
+            # tar -czvf $backup_folder/mysql_db_${DATABASE}_latest.dmp .
+            aws s3 cp $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp s3://$backup_bucket/$S3FOLDER/ --storage-class $S3TYPE
+            rm -rf $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp
+          fi
+        fi
+        # [[ $DATABASE == "all" ]] && echo 'mysqldump -u $db_master_user -p$db_master_pass --all-databases -h $db_master_host --single-transaction > $backup_folder/${DATABASE}_${datevar}.dmp' ||
+        #   echo 'mysqldump -u $db_master_user -p$db_master_pass $DATABASE -h $db_master_host --single-transaction > $backup_folder/${DATABASE}_${datevar}.dmp'
+        # [[ $DATABASE == "all" ]] && mysqldump -u $db_master_user -p$db_master_pass --all-databases -h $db_master_host --single-transaction > $backup_folder/${DATABASE}_${datevar}.dmp ||
+        #   mysqldump -u $db_master_user -p$db_master_pass $DATABASE -h $db_master_host --single-transaction > $backup_folder/${DATABASE}_${datevar}.dmp
+
+        # mysqldump -u masteruser -pByP#Mylsd3dfda423fds wordpress_des -h prod-db-01.mysql.database.azure.com > $backup_folder/wordpress_prd_20221230.dmp
+        exit
+        # echo "tar -czvf $backup_folder/${app}_${environment}_html_$datevar.tar.gz ."
+        # echo "aws s3 cp $backup_folder/${app}_${environment}_html_$datevar.tar.gz s3://$backup_bucket/$S3FOLDER/ --storage-class $S3TYPE"
+        # echo "rm -rf $backup_folder/${app}_${environment}_html_$datevar.tar.gz"
+        # tar -czvf $backup_folder/${app}_${environment}_html_$datevar.tar.gz .
+        # aws s3 cp $backup_folder/${app}_${environment}_html_$datevar.tar.gz s3://$backup_bucket/$S3FOLDER/ --storage-class $S3TYPE
+        # rm -rf $backup_folder/${app}_${environment}_html_$datevar.tar.gz
+        # echo "** $1 $backup_folder executed successfully on S3 $2"
+      else
+      error_banner
+      echo -e "You should provide a database name to start backup!\n"
+      echo -e "Type \"./maintenance.sh backup_mysql_db help\" for more options.\n"
+      exit 1
+      fi
+    else
+      error_banner
+      echo -e "You should use (UPPERCASE): ${list_s3types[*]}\n"
+      echo -e "Type \"./maintenance.sh backup_mysql_db help\" for more options.\n"
+      exit 1
+    fi
+  else
+    error_banner
+    echo -e "You should use (lowercase): ${list_freq[*]}\n"
+    echo -e "Type \"./maintenance.sh backup_mysql_db help\" for more options.\n"
+    exit 1
+  fi
+}
+
+function backup_sites() {
+  set_variables $option
+
+  help() {
+    echo -e "\n** Backup Sites ($source_sites) **\n"
+    echo -e "Options:"
+    echo -e "<frequency>   -> latest|daily|weekly|monthly|annual|custom|latest (lowercase)"
+    echo -e "<type>        -> STANDARD|STANDARD_IA|ONEZONE_IA|INTELLIGENT_TIERING|GLACIER|DEEP_ARCHIVE|OUTPOSTS (uppercase)"
+    echo -e "Backup target -> s3://$backup_bucket/<frequency>\n"
+    echo -e "Usage:"
+    echo -e "./maintenance.sh backup_sites <frequency> <type>\n"
+    exit 1
+  }
+
+  if [[ "$1" == "" ]]; then
+    help
+    exit 1
+  fi
+  if [[ "$1" == "help" ]]; then
+    help
+    exit 1
+  fi
+
+  if [[ " ${list_freq[@]} " =~ " $1 " ]]; then
+    if [[ " ${list_s3types[@]} " =~ " $2 " ]]; then
+      S3FOLDER=$1
+      S3TYPE=$2
+
+      echo -e "\n***************** $1 BACKUP ***********************\n"
+      echo "Date: $datevar"
+      echo "Option: $option"
+      echo "Frequency: $1"
+      echo "S3 destination: s3://$backup_bucket/$S3FOLDER"
+      echo "S3 storage class: $S3TYPE"
+      cd $source_sites
+      echo "** EXECUTING $1 S3 $2 BACKUP WITH THE FOLLOWING PARAMETERS:"
+
+      if [[ $1 == "latest" ]] ; then
+        tar -czvf $backup_folder/${app}_${environment}_html_latest.tar.gz .
+        aws s3 cp $backup_folder/${app}_${environment}_html_latest.tar.gz s3://$backup_bucket/daily/ --storage-class $S3TYPE
+        rm -rf $backup_folder/${app}_${environment}_html_latest.tar.gz
+      elif [[ $1 == "decomission" ]] ; then
+        tar -czvf $backup_folder/${app}_${environment}_html_decomission_${datevar}_${hourvar}.tar.gz .
+        aws s3 cp $backup_folder/${app}_${environment}_html_decomission_${datevar}_${hourvar}.tar.gz s3://$backup_bucket/decomission/ --storage-class $S3TYPE
+        rm -rf $backup_folder/${app}_${environment}_html_decomission_${datevar}_${hourvar}.tar.gz
+      else
+        tar -czvf $backup_folder/${app}_${environment}_html_$datevar.tar.gz .
+        aws s3 cp $backup_folder/${app}_${environment}_html_$datevar.tar.gz s3://$backup_bucket/$S3FOLDER/ --storage-class $S3TYPE
+        rm -rf $backup_folder/${app}_${environment}_html_$datevar.tar.gz
+      fi
+
+      echo "** $1 backup executed successfully on S3 $2"
+    else
+      echo -e "You should use (UPPERCASE): ${list_s3types[*]}\n"
+      echo -e "Type \"./maintenance.sh backup_mysql_db help\" for more options.\n"
+      exit 1
+    fi
+  else
+    echo -e "You should use (lowercase): ${list_freq[*]}\n"
+    echo -e "Type \"./maintenance.sh backup_mysql_db help\" for more options.\n"
+    exit 1
+  fi
+  if [[ -z "${1:-}" ]]; then
+      echo -e "Error: You need to provide frequency (daily|weekly|monthly|annual) and S3 Storage Type (STANDARD|STANDARD_IA|ONEZONE_IA|INTELLIGENT_TIERING|GLACIER|DEEP_ARCHIVE|OUTPOSTS)\n"
+      echo -e "ex: ./maintenance.sh backup_sites frequency s3type\n"
+      exit 1
+  fi
+}
+
+# ToDo: Function to restore from daily/weekly/... and which day
+function restore_sites() {
+  aws s3 cp s3://$backup_bucket/daily/${app}_${environment}_html_latest.tar.gz $source_sites/
+  cd $source_sites
+  tar -xzf ${app}_${environment}_html_latest.tar.gz .
+  chown nginx:nginx -R $source_sites/
+  rm -rf ${app}_${environment}_html_latest.tar.gz
+  systemctl restart nginx
+}
+
+
+function help() {
+  echo -e "**** HELP ****"
+  echo -e "Usage:"
+  echo -e "./maintenance help <- this output"
+  echo -e "./maintenance backup_sites|restore_sites|backup_mysql_db|restore_db <options>\n"
+}
+
+# Main
+function main() {
+  # Check if env is provided
+  # if [[ -z "${1:-}" ]]; then
+  #     echo "Error: You need to provide an environmentment, e.g., ./runtf.sh env-here\n"
+  #     exit 1
+  # fi
+  if [[ "$option" == "backup_sites_latest" ]]; then
+    mac_exit # disable this function for MacOS Systems
+    set_variables
+    backup_sites_latest
+    exit 1
+  fi
+  if [[ "$option" == "backup_sites" ]]; then
+    mac_exit # disable this function for MacOS Systems
+    set_variables
+    backup_sites "$2" "$3"
+    exit 1
+  fi
+  if [[ "$option" == "backup_mysql_db" ]]; then
+    backup_mysql_db "$2" "$3" "$4"
+    exit 1
+  fi
+  if [[ "$option" == "refresh_db" ]]; then
+    set_variables
+    refresh_db "$2" "$3"
+    exit 1
+  fi
+  if [[ "$option" == "restore_sites" ]]; then
+    mac_exit # disable this function for MacOS Systems
+    set_variables
+    restore_sites
+    exit 1
+  fi
+  if [[ "$option" == "help" ]]; then
+    help
+    exit 1
+  fi
+  if [[ "$option" == "" ]]; then
+    echo -e "Please provide an option!\n"
+    help
+    exit 1
+  fi
+  echo -e "Wrong option\n"
+  help
+  exit
+}
+
+# Calls main with args
+main "$@"
