@@ -1,0 +1,120 @@
+{
+	"agent": {
+		"metrics_collection_interval": 300,
+        "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
+        "debug": false,
+		"run_as_user": "root"
+	},
+	"logs": {
+		"logs_collected": {
+			"files": {
+				"collect_list": [
+					{
+						"file_path": "/var/log/cloud-init.log",
+						"log_group_name": "{{loggroup}}",
+						"log_stream_name": "{instance_id}/cloud-init.log"
+					},
+                    {
+						"file_path": "/var/log/cloud-init-output.log",
+						"log_group_name": "{{loggroup}}",
+						"log_stream_name": "{instance_id}/cloud-init-output.log"
+					},
+                    {
+						"file_path": "/var/log/cfn-init.log",
+						"log_group_name": "{{loggroup}}",
+						"log_stream_name": "{instance_id}/cfn-init.log"
+					},
+                    {
+						"file_path": "/var/log/cfn-init-cmd.log",
+						"log_group_name": "{{loggroup}}",
+						"log_stream_name": "{instance_id}/cfn-init-cmd.log"
+					},
+                    {
+						"file_path": "/var/log/cfn-hup.log",
+						"log_group_name": "{{loggroup}}",
+						"log_stream_name": "{instance_id}/cfn-hup.log"
+					},
+                    {
+						"file_path": "/var/log/cron",
+						"log_group_name": "{{loggroup}}",
+						"log_stream_name": "{instance_id}/cron"
+					}
+				]
+			}
+		}
+	},
+	"metrics": {
+		"aggregation_dimensions" : [
+            ["AutoScalingGroupName"],
+            ["InstanceId", "InstanceType"],
+            []
+        ],
+		"append_dimensions": {
+			"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+			"ImageId": "${aws:ImageId}",
+			"InstanceId": "${aws:InstanceId}",
+			"InstanceType": "${aws:InstanceType}"
+		},
+		"metrics_collected": {
+			"collectd": {
+				"metrics_aggregation_interval": 300
+			},
+			"cpu": {
+				"measurement": [
+					"cpu_usage_idle",
+					"cpu_usage_iowait",
+					"cpu_usage_user",
+					"cpu_usage_system"
+				],
+				"metrics_collection_interval": 300,
+				"resources": [
+					"*"
+				],
+				"totalcpu": false
+			},
+			"disk": {
+				"measurement": [
+					"used_percent",
+					"inodes_free"
+				],
+				"metrics_collection_interval": 300,
+				"resources": [
+					"*"
+				]
+			},
+			"diskio": {
+				"measurement": [
+					"io_time"
+				],
+				"metrics_collection_interval": 300,
+				"resources": [
+					"*"
+				]
+			},
+            "processes": {
+                "measurement": [
+                    "running",
+                    "sleeping",
+                    "dead"
+                ]
+            },
+			"mem": {
+				"measurement": [
+					"mem_used_percent"
+				],
+				"metrics_collection_interval": 300
+			},
+			"statsd": {
+				"metrics_aggregation_interval": 600,
+				"metrics_collection_interval": 300,
+				"service_address": ":8125"
+			},
+			"swap": {
+				"measurement": [
+					"swap_used_percent"
+				],
+				"metrics_collection_interval": 300
+			}
+		}
+	}
+}
