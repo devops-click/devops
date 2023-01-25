@@ -308,20 +308,7 @@ function backup_mysql_db() {
             rm -rf $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp
           fi
         fi
-        # [[ $DATABASE == "all" ]] && echo 'mysqldump -u $db_master_user -p$db_master_pass --all-databases -h $db_master_host --single-transaction > $backup_folder/${DATABASE}_${datevar}.dmp' ||
-        #   echo 'mysqldump -u $db_master_user -p$db_master_pass $DATABASE -h $db_master_host --single-transaction > $backup_folder/${DATABASE}_${datevar}.dmp'
-        # [[ $DATABASE == "all" ]] && mysqldump -u $db_master_user -p$db_master_pass --all-databases -h $db_master_host --single-transaction > $backup_folder/${DATABASE}_${datevar}.dmp ||
-        #   mysqldump -u $db_master_user -p$db_master_pass $DATABASE -h $db_master_host --single-transaction > $backup_folder/${DATABASE}_${datevar}.dmp
-
-        # mysqldump -u masteruser -pByP#Mylsd3dfda423fds wordpress_des -h prod-db-01.mysql.database.azure.com > $backup_folder/wordpress_prd_20221230.dmp
         exit
-        # echo "tar -czvf $backup_folder/${app}_${environment}_html_$datevar.tar.gz ."
-        # echo "aws s3 cp $backup_folder/${app}_${environment}_html_$datevar.tar.gz s3://$backup_bucket/$S3FOLDER/ --storage-class $S3TYPE"
-        # echo "rm -rf $backup_folder/${app}_${environment}_html_$datevar.tar.gz"
-        # tar -czvf $backup_folder/${app}_${environment}_html_$datevar.tar.gz .
-        # aws s3 cp $backup_folder/${app}_${environment}_html_$datevar.tar.gz s3://$backup_bucket/$S3FOLDER/ --storage-class $S3TYPE
-        # rm -rf $backup_folder/${app}_${environment}_html_$datevar.tar.gz
-        # echo "** $1 $backup_folder executed successfully on S3 $2"
       else
       error_banner
       echo -e "You should provide a database name to start backup!\n"
