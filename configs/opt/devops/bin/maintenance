@@ -20,7 +20,7 @@ echo -e "                      ||     ||                        "
 echo -e "                                               v1.00   "
 echo -e "                 https://devops.click                  \n"
 echo "Attention: To use this script you must have envs file configured!"
-echo -e "Template: https://github.com/devops-click/devops/blob/main/configs/opt/devops/envs.template \n"
+echo -e "Template:  https://github.com/devops-click/devops/blob/main/configs/opt/devops/envs.template \n"
 
 option=$1
 datevar="$(date +%Y-%m-%d)"
@@ -264,22 +264,25 @@ function backup_mysql_db() {
         S3FOLDER=$1
         S3TYPE=$2
         DATABASE=$3
+        INCLUDED_DBS=$(echo "show databases" | mysql -u $db_master_user -p$db_master_pass -h $db_master_host | grep -Ev "^(Database|mysql|performance_schema|information_schema|sys)$")
 
         echo "** Executing $1 S3 $2 backup with the following parameters:"
         echo -e "\n***************** $1 BACKUP ***********************\n"
-        echo "Date: $datevar $hourvar"
-        echo "Option: $option"
-        echo "Frequency: $1"
-        echo "Database: $DATABASE"
-        echo "Enironment: $environment"
-        echo "DB host: $db_master_host"
-        echo "DB user: $db_master_user"
-        echo "S3 destination: s3://$backup_bucket/$S3FOLDER"
-        echo -e "S3 type used: $S3TYPE\n"
+        echo -e "- Date:           $datevar $hourvar"
+        echo -e "- Option:         $option"
+        echo -e "- Environment:    \033[1m$environment\033[0m"
+        echo -e "- Frequency:      \033[1m$1\033[0m"
+        echo -e "- S3 destination: s3://$backup_bucket/$S3FOLDER"
+        echo -e "- S3 type used:   $S3TYPE"
+        echo -e "- DB host:        $db_master_host"
+        echo -e "- DB user:        $db_master_user"
+        echo -e "-------------------------------------------------------"
+        [ $DATABASE == "all" ] && echo -e "- Databases:\n\033[1m$INCLUDED_DBS\033[0m\n" || echo "Database: \033[1m$DATABASE\033[0m\n"
 
         if [[ $1 == "latest" ]] ; then
           if [[ $DATABASE == "all" ]] ; then
-            mysqldump -u $db_master_user -p$db_master_pass --all-databases -h $db_master_host --single-transaction > $backup_folder/mysql_db_${DATABASE}_latest.dmp
+            # mysqldump -u $db_master_user -p$db_master_pass --all-databases -h $db_master_host --single-transaction > $backup_folder/mysql_db_${DATABASE}_latest.dmp
+            mysqldump -u $db_master_user -p$db_master_pass --databases $INCLUDED_DBS -h $db_master_host --single-transaction > $backup_folder/mysql_db_${DATABASE}_latest.dmp
             # cd $backup_folder
             # tar -czvf $backup_folder/mysql_db_${DATABASE}_latest.dmp .
             aws s3 cp $backup_folder/mysql_db_${DATABASE}_latest.dmp s3://$backup_bucket/daily/ --storage-class $S3TYPE
@@ -294,7 +297,7 @@ function backup_mysql_db() {
           fi
         else
           if [[ $DATABASE == "all" ]] ; then
-            mysqldump -u $db_master_user -p$db_master_pass --all-databases -h $db_master_host --single-transaction > $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp
+            mysqldump -u $db_master_user -p$db_master_pass --databases $INCLUDED_DBS -h $db_master_host --single-transaction > $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp
             # cd $backup_folder
             # tar -czvf $backup_folder/mysql_db_${DATABASE}_latest.dmp .
             aws s3 cp $backup_folder/mysql_db_${DATABASE}_${datevar}.dmp s3://$backup_bucket/$S3FOLDER/ --storage-class $S3TYPE
@@ -357,14 +360,19 @@ function backup_sites() {
       S3FOLDER=$1
       S3TYPE=$2
 
-      echo -e "\n***************** $1 BACKUP ***********************\n"
-      echo "Date: $datevar"
-      echo "Option: $option"
-      echo "Frequency: $1"
-      echo "S3 destination: s3://$backup_bucket/$S3FOLDER"
-      echo "S3 storage class: $S3TYPE"
       cd $source_sites
-      echo "** EXECUTING $1 S3 $2 BACKUP WITH THE FOLLOWING PARAMETERS:"
+
+      banner() {
+        echo -e "\n******************* $S3FOLDER BACKUP *************************\n"
+        echo -e "Date:             $datevar"
+        echo -e "Option:           $option"
+        echo -e "Frequency:        $S3FOLDER"
+        echo -e "Source folder:    $source_sites"
+        echo -e "S3 destination:   s3://$backup_bucket/$S3FOLDER"
+        echo -e "S3 storage class: $S3TYPE\n"
+      }
+
+      banner
 
       if [[ $1 == "latest" ]] ; then
         tar -czvf $backup_folder/${app}_${environment}_html_latest.tar.gz .
@@ -380,7 +388,9 @@ function backup_sites() {
         rm -rf $backup_folder/${app}_${environment}_html_$datevar.tar.gz
       fi
 
-      echo "** $1 backup executed successfully on S3 $2"
+      banner
+      echo -e "********** $1 backup executed successfully on S3 **********\n"
+
     else
       echo -e "You should use (UPPERCASE): ${list_s3types[*]}\n"
       echo -e "Type \"./maintenance.sh backup_mysql_db help\" for more options.\n"
