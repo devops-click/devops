@@ -1,5 +1,4 @@
-<img src="https://s3.amazonaws.com/devops.public/images/devops.click/devops.click_github_markdown.png">
-
+<img src="https://s3.amazonaws.com/devops.public/images/devops.click/devops.click_github_markdown-00.png">
 
 ```
  ____              ___                  _ _      _
