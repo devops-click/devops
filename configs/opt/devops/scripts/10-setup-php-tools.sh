@@ -16,5 +16,5 @@
 
 echo -e "** Downloading PHP-TOOLS..."
 mkdir -p /var/www/html/tools/
-curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/var/www/html/tools/info.php -o /var/www/html/tools/
-curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/var/www/html/tools/deploy.html -o /var/www/html/tools/
+curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/var/www/html/tools/info.php -o /var/www/html/tools/info.php
+curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/var/www/html/tools/deploy.html -o /var/www/html/tools/deploy.html
