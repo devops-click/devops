@@ -140,7 +140,7 @@ http {
     listen 80;
     server_name .devops.click .alb.example.com .reverse.example.com;
     # include /etc/nginx/snippets/letsencrypt-acme-challenge.conf; # Disabled. We recommend that you use DNS verification
-    return 302 https://$server_name$request_uri; # changed from $host to $server_name
+    return 302 https://$host$request_uri;
   }
   #=============================================================
   # Wordpress Site Example
