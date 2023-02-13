@@ -1,0 +1,171 @@
+#--------------------------------------------------------,
+#  ____              ___                  _ _      _     |
+# |  _ \  _____   __/ _ \ _ __  ___   ___| (_) ___| | __ |
+# | | | |/ _ \ \ / / | | | '_ \/ __| / __| | |/ __| |/ / |
+# | |_| |  __/\ V /| |_| | |_) \__ \| (__| | | (__|   <  |
+# |____/ \___| \_/  \___/| .__/|___(_)___|_|_|\___|_|\_\ |
+#                        |_|                             |
+#--------------------------------------------------------|
+#     Author: Anderson Ayres (anderson@devops.click)     |
+#  https://devops.click | https://anderson.devops.click  |
+#--------------------------------------------------------|
+#      NGINX CONFIGURATION TEMPLATE FOR EDGE PROXIES     |
+#                         v1.00                          |
+#--------------------------------------------------------'
+# https://devops.click/tags/nginx
+# https://devops.click/tags/linux
+
+user                 nginx;
+pid                  /tmp/nginx.pid;
+error_log            logs/error.log;
+worker_processes     5;
+# worker_rlimit_nofile 8192;
+# worker_processes     auto;
+events {
+  worker_connections 4096;  # Default: 1024
+  multi_accept       on;    # Performance - Allows worker to accept all connections at once, instead of one at a time
+  use                epoll; # Connection treatment method - Requires Linux Kernel 2.6+
+}
+http {
+  default_type                       application/octet-stream;
+  include                            /etc/nginx/mime.types;
+  index                              index.html index.htm;
+  keepalive_timeout                  300;
+  server_tokens                      off;
+  send_timeout                       300;
+  sendfile                           on;
+  tcp_nopush                         on;
+  real_ip_recursive                  on;
+  proxy_read_timeout                 300;
+  proxy_connect_timeout              300;
+  proxy_send_timeout                 300;
+  proxy_buffer_size                  16k;
+  proxy_busy_buffers_size            32k;
+  proxy_buffers                      2 32k;
+  proxy_set_header Host              $host;
+  proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Forwarded-Host  $host:$server_port;
+  proxy_set_header X-Real-IP         $remote_addr;
+  proxy_cache                        cache;
+  proxy_cache_bypass                 $http_cache_control;
+  proxy_cache_key                    $proxy_host$request_uri;
+  proxy_cache_valid 200 301 302 10m;
+  proxy_cache_valid 400 401 404 0m;
+  #=============================================================
+  # Real IP - Trusted Sources
+  #=============================================================
+  # For more Trusted IP's like CloudFlare ranges, etc... Install nginx-module-headers-more and
+  # load load_module modules/ngx_http_headers_more_filter_module.so; module
+  ##set_real_ip_from                   172.16.0.0/16;
+  # set_real_ip_from 103.21.244.0/22; # When using Cloudflare
+  # set_real_ip_from 103.22.200.0/22; # When using Cloudflare
+  # set_real_ip_from 103.31.4.0/22;   # When using Cloudflare
+  # set_real_ip_from 186.2.160.0/24;  # When using DDoS Guard (ddos-guard.net)
+  ##real_ip_header                     X-Forwarded-For;
+  ##real_ip_recursive                  on;
+  #=============================================================
+  # Logs
+  #=============================================================
+  log_format   main '$remote_addr - $remote_user [$time_local]  $status '
+    '"$request" $body_bytes_sent "$http_referer" '
+    '"$http_user_agent" "$http_x_forwarded_for"';
+  #=============================================================
+  # SSL
+  #=============================================================
+  ssl_certificate /etc/nginx/ssl/letsencryt.crt; # you must generate them first, or create a self-signed
+  ssl_certificate_key /etc/nginx/ssl/letsencrypt.key; # you must generate them first, or create a self-signed
+  ssl_verify_client         off;
+  ssl_prefer_server_ciphers on;
+  ssl_protocols             TLSv1.1 TLSv1.2 TLSv1.3;
+  ssl_ciphers ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DHE+AES128:!ADH:!AECDH:!MD5;
+  #=============================================================
+  # Tunning for Uploads
+  #=============================================================
+  client_max_body_size  512m;
+  #=============================================================
+  # Logging
+  ####################################################################
+  access_log /dev/stdout proxylog;
+  error_log /dev/stderr notice;
+  # access_log /var/log/nginx/access.log proxylog;
+  # error_log /var/log/nginx/error.log notice;
+  #=============================================================
+  # Compression
+  #=============================================================
+  gzip            on;
+  gzip_min_length 1100;
+  gzip_buffers    4 8k;
+  gzip_proxied    any;
+  gzip_types      text/plain;
+  #=============================================================
+  # Enable build of optimal types_hash
+  #=============================================================
+  types_hash_max_size                4096;
+  types_hash_bucket_size              128;
+  server_names_hash_bucket_size       128;
+  #=============================================================
+  # Health-check / Status Page
+  #=============================================================
+  server {
+    # health-check
+    listen 8080;
+    location / {
+      access_log off;
+      return 200;
+    }
+    # status page
+    location /nginx_status {
+      access_log off;
+      stub_status;
+    }
+  }
+  #=============================================================
+  # Drop IP Requests
+  #=============================================================
+  server {
+    listen 80 default_server;
+    listen 443 ssl http2 default_server;
+    return 444;
+  }
+  #=============================================================
+  # SSL Redirection
+  #=============================================================
+  server {
+    listen 80;
+    server_name .devops.click .devops.click .reverse.example.com;
+    # include /etc/nginx/snippets/letsencrypt-acme-challenge.conf; # Disabled. We recommend that you use DNS verification
+    return 302 https://$host$request_uri;
+  }
+  #=============================================================
+  # Load Balancer Site Example
+  #=============================================================
+  upstream albsite {
+    server 127.0.0.2:8881 weight=5;
+    server 127.0.0.2:8882 weight=5;
+    server 192.168.0.2:8881;
+    server 192.168.0.2:8882;
+  }
+  server {
+    listen 443  ssl http2;
+    server_name alb.devops.click;
+    access_log  logs/alb.example.access.log main;
+
+    location / {
+      proxy_pass      https://albsite;
+    }
+  }
+  #=============================================================
+  # Reverse Proxy Site Example
+  #=============================================================
+  server {
+    listen 443 ssl http2;
+    server_name .devops.click;
+
+    set $upstream_endpoint https://where.to.redirect;
+    location / {
+      proxy_pass              $upstream_endpoint;
+      proxy_ssl_verify        off;
+    }
+  }
+}
