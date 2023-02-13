@@ -19,6 +19,7 @@ echo -e "** Downloading NGINX configurations..."
 [ ! -d /etc/nginx/snippets ] && mkdir -p /etc/nginx/snippets
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/wordpress/etc/nginx/conf.d/php-fpm.conf -o /etc/nginx/conf.d/php-fpm.conf
 # curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/wordpress/etc/nginx/default.d/php.conf -o /etc/nginx/default.d/php.conf
+rm -rf /etc/nginx/default.d/php.conf
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/wordpress/etc/nginx/snippets/converter-for-media.conf -o /etc/nginx/snippets/converter-for-media.conf
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/wordpress/etc/nginx/snippets/letsencrypt-acme-challenge.conf -o /etc/nginx/snippets/letsencrypt-acme-challenge.conf
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/wordpress/etc/nginx/snippets/wordpress-defaults.conf -o /etc/nginx/snippets/wordpress-defaults.conf
