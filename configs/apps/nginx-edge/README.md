@@ -11,6 +11,6 @@
                NGINX EDGE CONFIGURATION
 ------------------------------------------------------
 ```
-> **_Author_**: [Anderson Ayres Bittencourt](https://anderson.devops.click)<br>Reference: https://devops.click/tags/wordpress/
+> **_Author_**: [Anderson Ayres Bittencourt](https://anderson.devops.click)<br>Reference: https://devops.click/tags/nginx/
 
 ---
