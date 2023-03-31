@@ -28,7 +28,7 @@ curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/koi-utf -o /etc/nginx/koi-utf
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/koi-win -o /etc/nginx/koi-win
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/mime.types -o /etc/nginx/mime.types
-curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/nginx.conf.template -o /etc/nginx/nginx.conf.template
+# curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/nginx.conf.template -o /etc/nginx/nginx.conf.template
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/scgi_params -o /etc/nginx/scgi_params
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/uwsgi_params -o /etc/nginx/uwsgi_params
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/win-utf -o /etc/nginx/win-utf
