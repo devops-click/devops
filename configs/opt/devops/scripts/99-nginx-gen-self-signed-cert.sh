@@ -16,6 +16,7 @@
 tmpssldir=/tmp-ss-ssl
 
 [[ -d $tmpssldir ]] && rm -rf $tmpssldir/* || mkdir $tmpssldir
+[[ -d /etc/nginx/ssl/ ]] && rm -rf /etc/nginx/ssl/* || mkdir -p /etc/nginx/ssl/
 
 echo "** Creating SSL request config file..."
 cat >$tmpssldir/doclick-openssl.conf <<'EOF'
