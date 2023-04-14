@@ -25,3 +25,6 @@ curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/scgi_params -o /etc/nginx/scgi_params
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/uwsgi_params -o /etc/nginx/uwsgi_params
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/nginx/win-utf -o /etc/nginx/win-utf
+
+echo -e "** Creating Generic NGINX Self-Signed Certificate..."
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/devops-click/devops/main/configs/opt/devops/scripts/99-nginx-gen-self-signed-cert.sh)"

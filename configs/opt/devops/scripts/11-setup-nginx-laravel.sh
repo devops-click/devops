@@ -34,3 +34,6 @@ curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/laravel/etc/php-fpm.d/www.conf -o /etc/php-fpm.d/www.conf
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/laravel/etc/php.ini -o /etc/php.ini
 curl -sL https://raw.githubusercontent.com/devops-click/devops/main/configs/apps/nginx-common/etc/php.d/20-zip.ini -o /etc/php.d/20-zip.ini
+
+echo -e "** Creating Generic NGINX Self-Signed Certificate..."
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/devops-click/devops/main/configs/opt/devops/scripts/99-nginx-gen-self-signed-cert.sh)"
