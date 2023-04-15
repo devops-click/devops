@@ -48,7 +48,8 @@ DNS.2 = yourdns2
 EOF
 
 echo "** Generate key and CSR from..."
-openssl req -newkey rsa:4096 --sha512 -nodes -keyout /etc/nginx/ssl/ssl.key -out $tmpssldir/ssl.csr -config $tmpssldir/doclick-openssl.conf
+openssl req -newkey rsa:4096 -nodes -keyout /etc/nginx/ssl/ssl.key -out $tmpssldir/ssl.csr -config $tmpssldir/doclick-openssl.conf
+# openssl req -newkey rsa:4096 --sha512 -nodes -keyout /etc/nginx/ssl/ssl.key -out $tmpssldir/ssl.csr -config $tmpssldir/doclick-openssl.conf # not compatible with amzn2
 
 # To check request if needed
 #openssl req -text -noout -in ssl.csr
