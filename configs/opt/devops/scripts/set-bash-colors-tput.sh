@@ -59,6 +59,7 @@
 #     echo $(tput sgr0)
 # done
 
+BLACK="0"
 RED="1"
 GREEN="2"
 YELLOW="3"
@@ -76,6 +77,7 @@ STANDOUT=$(tput smso)
 STANDOUTEND=$(tput rmso)
 END=$(tput sgr0)
 
+TEXT_BLACK=$(tput setaf ${BLACK})
 TEXT_RED=$(tput setaf ${RED})
 TEXT_GREEN=$(tput setaf ${GREEN})
 TEXT_YELLOW=$(tput setaf ${YELLOW})
@@ -84,6 +86,7 @@ TEXT_MAGENTA=$(tput setaf ${MAGENTA})
 TEXT_CYAN=$(tput setaf ${CYAN})
 TEXT_WHITE=$(tput setaf ${WHITE})
 
+BG_BLACK=$(tput setab ${BLACK})
 BG_RED=$(tput setab ${RED})
 BG_GREEN=$(tput setab ${GREEN})
 BG_YELLOW=$(tput setab ${YELLOW})
@@ -92,4 +95,4 @@ BG_MAGENTA=$(tput setab ${MAGENTA})
 BG_CYAN=$(tput setab ${CYAN})
 BG_WHITE=$(tput setab ${WHITE})
 
-echo -e "\n${TEXT_GREEN}${BOLD}** set-bash-colors-tput.sh loaded! **${END}\n"
+echo -e "\n${TEXT_GREEN}** set-bash-colors-tput.sh loaded! **${END}\n"
