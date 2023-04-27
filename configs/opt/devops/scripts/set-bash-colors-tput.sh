@@ -95,4 +95,4 @@ BG_MAGENTA=$(tput setab ${MAGENTA})
 BG_CYAN=$(tput setab ${CYAN})
 BG_WHITE=$(tput setab ${WHITE})
 
-echo -e "\n${TEXT_GREEN}** set-bash-colors-tput.sh loaded! **${END}\n"
+echo -e "${TEXT_GREEN}** set-bash-colors-tput.sh loaded! **${END}"
