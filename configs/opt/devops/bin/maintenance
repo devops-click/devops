@@ -418,7 +418,7 @@ function restore_sites() {
   echo "** removing old $backup_folder/${app}_${environment}_html_latest.tar.gz **"
   rm -rf $backup_folder/${app}_${environment}_html_latest.tar.gz || echo "$backup_folder/${app}_${environment}_html_latest.tar.gz does not exist"
   aws s3 cp s3://$backup_bucket/daily/${app}_${environment}_html_latest.tar.gz $backup_folder/
-  tar xzfP $backup_folder/${app}_${environment}_html_latest.tar.gz -C $source_sites
+  tar xzf $backup_folder/${app}_${environment}_html_latest.tar.gz -C $source_sites
   chown nginx:nginx -R $source_sites/
 }
 
@@ -441,28 +441,28 @@ function main() {
     mac_exit # disable this function for MacOS Systems
     set_variables
     backup_sites_latest
-    exit 1
+    exit 0
   fi
   if [[ "$option" == "backup_sites" ]]; then
     mac_exit # disable this function for MacOS Systems
     set_variables
     backup_sites "$2" "$3"
-    exit 1
+    exit 0
   fi
   if [[ "$option" == "backup_mysql_db" ]]; then
     backup_mysql_db "$2" "$3" "$4"
-    exit 1
+    exit 0
   fi
   if [[ "$option" == "refresh_db" ]]; then
     set_variables
     refresh_db "$2" "$3"
-    exit 1
+    exit 0
   fi
   if [[ "$option" == "restore_sites" ]]; then
     mac_exit # disable this function for MacOS Systems
     set_variables
     restore_sites
-    exit 1
+    exit 0
   fi
   if [[ "$option" == "help" ]]; then
     help
