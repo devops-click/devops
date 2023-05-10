@@ -414,12 +414,10 @@ function backup_sites() {
 
 # ToDo: Function to restore from daily/weekly/... and which day
 function restore_sites() {
+  rm -rf $backup_folder/${app}_${environment}_html_latest.tar.gz
   aws s3 cp s3://$backup_bucket/daily/${app}_${environment}_html_latest.tar.gz $backup_folder/
-  cd $source_sites
   tar xzfP $backup_folder/${app}_${environment}_html_latest.tar.gz -C $source_sites
   chown nginx:nginx -R $source_sites/
-  rm -rf ${app}_${environment}_html_latest.tar.gz
-  systemctl restart nginx
 }
 
 
